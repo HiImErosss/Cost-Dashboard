@@ -1,233 +1,127 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Goldnet Cost Dashboard</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Goldnet CFO Cost Dashboard</title>
 <style>
-:root{--bg:#07111f;--card:#132238;--card2:#0b1424;--muted:#a8c1dc;--line:rgba(255,255,255,.1);--blue:#38bdf8;--green:#34d399;--yellow:#fbbf24;--red:#fb7185;--purple:#a78bfa}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Arial,sans-serif;padding:22px}h1{font-size:34px;margin:0 0 6px}.sub{color:var(--muted);margin-bottom:18px}
-.panel,.status,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px}.controls{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
-label{font-size:12px;color:var(--muted)}select,input{width:100%;margin-top:6px;background:#07111f;color:#fff;border:1px solid #263a58;border-radius:12px;padding:10px}
-.label{color:var(--muted);font-size:14px}.value{font-size:28px;font-weight:800;margin-top:9px}.helper,.small{color:var(--muted);font-size:12px;margin-top:7px}.blue{color:var(--blue)}.green{color:var(--green)}.yellow{color:var(--yellow)}.red{color:var(--red)}.purple{color:var(--purple)}
-h3{margin:0 0 6px}.chart-sub{color:var(--muted);font-size:12px;margin-bottom:14px}
-.bar-row{margin-bottom:13px}.bar-top{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:6px}.track{height:10px;background:var(--card2);border-radius:99px;overflow:hidden}.fill{height:10px;background:var(--blue);border-radius:99px}.fill.green{background:var(--green)}.fill.yellow{background:var(--yellow)}.fill.red{background:var(--red)}.fill.purple{background:var(--purple)}.progress{height:12px;background:#07111f;border-radius:999px;overflow:hidden;margin-top:10px}.progress-fill{height:12px;border-radius:999px}
-.months{height:275px;display:flex;align-items:flex-end;gap:14px;overflow-x:auto;padding-top:10px}.month{min-width:76px;text-align:center}.monthbar{width:42px;margin:0 auto;background:linear-gradient(180deg,var(--red),#b91c1c);border-radius:10px 10px 0 0}.monthlabel{font-size:11px;color:var(--muted);margin-top:8px}.monthvalue{font-size:11px;margin-top:4px}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;border-bottom:1px solid var(--line)}th{text-align:left;color:var(--muted)}.right{text-align:right}.score{font-size:56px;font-weight:900;margin-top:10px}.tag{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;background:#0b1424;color:var(--muted)}.debug{white-space:pre-wrap;font-family:Consolas,monospace;color:#a8c1dc;font-size:12px;max-height:180px;overflow:auto}
-@media(max-width:1200px){.grid{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.controls{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){body{padding:14px}.grid,.controls{grid-template-columns:1fr}h1{font-size:26px}}
+:root{--bg:#07111f;--card:#132238;--muted:#a8c1dc;--line:rgba(255,255,255,.1);--blue:#38bdf8;--green:#34d399;--yellow:#fbbf24;--red:#fb7185;--purple:#a78bfa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font-family:Arial,sans-serif;padding:22px}h1{margin:0 0 6px;font-size:34px}.sub,.small{color:var(--muted);font-size:13px}.status,.panel,.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:14px 0}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}.controls{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}label{font-size:12px;color:var(--muted)}select,input{width:100%;margin-top:6px;background:#07111f;color:#fff;border:1px solid #263a58;border-radius:12px;padding:10px}.label{color:var(--muted);font-size:14px}.value{font-size:28px;font-weight:800;margin-top:9px}.helper{color:var(--muted);font-size:12px;margin-top:7px}.blue{color:var(--blue)}.green{color:var(--green)}.yellow{color:var(--yellow)}.red{color:var(--red)}.purple{color:var(--purple)}h3{margin:0 0 6px}.bar-row{margin-bottom:13px}.bar-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}.track{height:10px;background:#0b1424;border-radius:99px;overflow:hidden}.fill{height:10px;border-radius:99px;background:var(--blue)}.fill.red{background:var(--red)}.fill.yellow{background:var(--yellow)}.fill.green{background:var(--green)}.fill.purple{background:var(--purple)}.progress{height:12px;background:#07111f;border-radius:99px;overflow:hidden;margin-top:10px}.score{font-size:56px;font-weight:900}.months{height:250px;display:flex;align-items:flex-end;gap:12px;overflow:auto}.month{min-width:70px;text-align:center}.monthbar{width:38px;margin:0 auto;background:linear-gradient(180deg,var(--red),#b91c1c);border-radius:10px 10px 0 0}.monthlabel,.monthvalue{font-size:11px;color:var(--muted);margin-top:6px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid var(--line)}th{color:var(--muted);text-align:left}.right{text-align:right}.debug{white-space:pre-wrap;font-family:Consolas,monospace;max-height:220px;overflow:auto;color:#a8c1dc}
+@media(max-width:1100px){.grid,.grid2,.controls{grid-template-columns:1fr 1fr}}@media(max-width:650px){.grid,.grid2,.controls{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <h1>Goldnet CFO Cost Dashboard</h1>
-<div class="sub">New Sheet • Dropdown Filters • No Double Count • Cost Structure • KPI Progress</div>
+<div class="sub">CSV cũ • Parent rows cố định • Không double count dòng con</div>
 <div id="status" class="status">Đang tải dữ liệu...</div>
 
-<div class="panel"><div class="controls">
+<div class="panel controls">
 <div><label>Target Budget</label><input id="targetBudget" value="12000000000" oninput="render()"></div>
 <div><label>Target COGS %</label><input id="targetCogs" value="55" oninput="render()"></div>
 <div><label>Target People %</label><input id="targetPeople" value="18" oninput="render()"></div>
 <div><label>Target OPEX %</label><input id="targetOpex" value="12" oninput="render()"></div>
 <div><label>Target Volatility %</label><input id="targetVol" value="20" oninput="render()"></div>
 <div><label>Debug</label><select id="filterDebug"><option>Hide</option><option>Show</option></select></div>
-</div></div>
+</div>
 
-<div class="panel"><div class="controls">
+<div class="panel controls">
 <div><label>Tháng từ</label><select id="filterFrom"></select></div>
 <div><label>Tháng đến</label><select id="filterTo"></select></div>
 <div><label>Nhóm chi phí</label><select id="filterGroup"></select></div>
-<div><label>Dịch vụ / Function</label><select id="filterService"></select></div>
-<div><label>Parent / Drilldown</label><select id="filterParent"></select></div>
-<div><label>Keyword</label><input id="filterKeyword" placeholder="Tìm dòng chi phí..." oninput="render()"></div>
-</div></div>
+<div><label>Parent row</label><select id="filterParent"></select></div>
+<div><label>Keyword</label><input id="filterKeyword" placeholder="Tìm dòng..." oninput="render()"></div>
+<div><label>Logic</label><input disabled value="Parent rows: 37,53,64..."></div>
+</div>
 
 <div id="kpis" class="grid"></div>
 <div id="progressCards" class="grid"></div>
 
 <div class="grid2">
-<div class="card"><h3>Cost Health Score</h3><div class="chart-sub">Budget, COGS, People, OPEX, Volatility</div><div id="scoreBox"></div></div>
-<div class="card"><h3>Cost Structure %</h3><div class="chart-sub">Tỷ trọng nhóm chi phí</div><div id="structure"></div></div>
-<div class="card"><h3>Monthly Cost Trend</h3><div class="chart-sub">Biến động theo tháng</div><div id="trend" class="months"></div></div>
-<div class="card"><h3>Monthly Variance</h3><div class="chart-sub">MoM growth</div><div id="variance"></div></div>
-<div class="card"><h3>COGS by Service</h3><div class="chart-sub">Livestream / Video / Shop / Affiliate</div><div id="cogsService"></div></div>
-<div class="card"><h3>OPEX Breakdown</h3><div class="chart-sub">People / Selling / G&A / Other</div><div id="opex"></div></div>
-<div class="card"><h3>Top Cost Drivers</h3><div class="chart-sub">Dòng tổng / parent rows lớn nhất</div><div id="topDrivers"></div></div>
-<div class="card"><h3>Drilldown Detail</h3><div class="chart-sub">Dòng con chỉ để xem chi tiết, không cộng KPI tổng</div><div style="overflow:auto"><table><thead><tr><th>Parent</th><th>Detail</th><th class="right">Amount</th></tr></thead><tbody id="detailTable"></tbody></table></div></div>
+<div class="card"><h3>Cost Health Score</h3><div id="scoreBox"></div></div>
+<div class="card"><h3>Cost Structure %</h3><div id="structure"></div></div>
+<div class="card"><h3>Monthly Cost Trend</h3><div id="trend" class="months"></div></div>
+<div class="card"><h3>Monthly Variance</h3><div id="variance"></div></div>
+<div class="card"><h3>Parent Group Breakdown</h3><div id="topDrivers"></div></div>
+<div class="card"><h3>COGS / Service Parent</h3><div id="cogsService"></div></div>
+<div class="card"><h3>OPEX Breakdown</h3><div id="opex"></div></div>
+<div class="card"><h3>Drilldown Detail</h3><div style="overflow:auto"><table><thead><tr><th>Parent</th><th>Row</th><th>Detail</th><th class="right">Amount</th></tr></thead><tbody id="detailTable"></tbody></table></div></div>
 </div>
-
 <div id="debugBox" class="panel debug" style="display:none"></div>
 
 <script>
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTc2GHplx8he2YGtNYH68NGOBi8wYhdUGa7wT2Y02Ms9UYMgoIndLDihW7QWKvFJwq82LaAepe_qdmc/pub?gid=0&single=true&output=csv";
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-let tableRows = [], parentRows = [], serviceRows = [], detailRows = [], monthCols = [], debugText = "";
+const CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSW8UJiUFKOpEUtDPtjfVRJ35MRdBYTgT6v_3wsoqm6ORgPYE38Q50aO3z4PKq9LSHBwo5jDAgpRLcF/pub?gid=1702940056&single=true&output=csv";
+const PARENT_ROWS=[37,53,64,66,72,76,77,87,93,99,104,110,115,116,119,121,122,124,125];
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+let tableRows=[], parentRows=[], detailRows=[], monthCols=[], debugText="";
 
-function csvParse(text){
-  const out=[]; let row=[]; let cell=""; let q=false;
-  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];
-    if(c=='"'&&q&&n=='"'){cell+='"';i++;}
-    else if(c=='"') q=!q;
-    else if(c==','&&!q){row.push(cell.trim());cell="";}
-    else if((c=='\n'||c=='\r')&&!q){if(c=='\r'&&n=='\n')i++;row.push(cell.trim());if(row.some(x=>String(x).trim()!=""))out.push(row);row=[];cell="";}
-    else cell+=c;
-  }
-  row.push(cell.trim()); if(row.some(x=>String(x).trim()!=""))out.push(row); return out;
-}
+function csvParse(text){const out=[];let row=[],cell="",q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c=='"'&&q&&n=='"'){cell+='"';i++;}else if(c=='"')q=!q;else if(c==','&&!q){row.push(cell.trim());cell="";}else if((c=='\n'||c=='\r')&&!q){if(c=='\r'&&n=='\n')i++;row.push(cell.trim());if(row.some(x=>String(x).trim()!=""))out.push(row);row=[];cell="";}else cell+=c;}row.push(cell.trim());if(row.some(x=>String(x).trim()!=""))out.push(row);return out;}
 function norm(s){return String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();}
-function money(v){if(v==null || v==="")return 0; if(typeof v==="number")return v; let s=String(v).trim(); if(!s || s=="-")return 0; return Number(s.replace(/[đ₫,\s]/g,"").replace(/\./g,"").replace(/[()]/g,""))||0;}
+function money(v){let s=String(v||"").trim();if(!s||s=="-")return 0;return Number(s.replace(/[đ₫,\s]/g,"").replace(/\./g,"").replace(/[()]/g,""))||0;}
 function vnd(v){return new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(v||0);}
 function pct(v){return (v||0).toFixed(1)+"%";}
-function compact(v){if(Math.abs(v)>=1e9)return (v/1e9).toFixed(1)+"B"; if(Math.abs(v)>=1e6)return (v/1e6).toFixed(0)+"M"; return new Intl.NumberFormat("vi-VN").format(v||0);}
+function compact(v){if(Math.abs(v)>=1e9)return (v/1e9).toFixed(1)+"B";if(Math.abs(v)>=1e6)return (v/1e6).toFixed(0)+"M";return new Intl.NumberFormat("vi-VN").format(v||0);}
 function target(id){return money(document.getElementById(id).value);}
-function cleanLabel(s){return String(s||"").replace(/^\s*[A-Z]?\.?\s*/,"").replace(/^\s*\d+(\.\d+)?\.\s*/,"").trim();}
+function cleanLabel(s){return String(s||"").replace(/^\s*\d+(\.\d+)?\.\s*/,"").trim();}
 function isMonth(x){return MONTHS.includes(String(x||"").trim());}
-function labelBeforeMonths(row, firstMonthIndex){for(let i=0;i<firstMonthIndex;i++){const v=String(row[i]||"").trim(); if(/[A-Za-zÀ-ỹ]/.test(v)) return v;} return "";}
+function labelBeforeMonths(row, firstMonthIndex){for(let i=0;i<firstMonthIndex;i++){const v=String(row[i]||"").trim();if(/[A-Za-zÀ-ỹ]/.test(v))return v;}return "";}
 function amount(row, monthList){return monthList.reduce((s,m)=>s+(row.months[m]||0),0);}
 
-function classify(label){
-  const s=norm(label);
-  if(s.includes("cogs") || s.includes("gia von") || s.includes("livestream") || s.includes("video") || s.includes("affiliate") || s.includes("shop")) {
-    if(s.includes("livestream")) return {group:"COGS",service:"Livestream"};
-    if(s.includes("video")) return {group:"COGS",service:"Video Production"};
-    if(s.includes("shop")) return {group:"COGS",service:"Shop Operation"};
-    if(s.includes("affiliate")) return {group:"COGS",service:"Affiliate"};
-    return {group:"COGS",service:"COGS"};
-  }
-  if(s.includes("luong") || s.includes("bhxh") || s.includes("nhan su") || s.includes("phuc loi") || s.includes("tuyen dung") || s.includes("dao tao")) return {group:"People Cost",service:"HR / Payroll"};
-  if(s.includes("khach hang") || s.includes("marketing") || s.includes("brand") || s.includes("website") || s.includes("seo") || s.includes("tiep khach") || s.includes("hoa hong")) return {group:"Selling Expense",service:"Sales & Marketing"};
-  if(s.includes("hanh chinh") || s.includes("thue nha") || s.includes("co so vat chat") || s.includes("van phong") || s.includes("phan mem") || s.includes("ke toan") || s.includes("thue") || s.includes("le phi") || s.includes("ngan hang")) return {group:"G&A",service:"Admin / Office"};
-  return {group:"Other",service:"Other"};
-}
-
-function looksParent(label){
-  const s = String(label||"").trim();
-  return /^([A-Z]\.\s|\d+\.\s|\d+\.\d+\.\s)/.test(s) || norm(s).includes("total") || norm(s).includes("dong tien ra");
-}
-function looksServiceParent(label){
-  return /^\s*1\.\d+\.\s/.test(String(label||"").trim()) || ["livestream","video","shop","affiliate"].some(k=>norm(label).includes(k));
+function classify(rowNumber,label){const s=norm(label);
+ if(rowNumber===37||s.includes("cogs")||s.includes("gia von"))return{group:"COGS",service:"COGS"};
+ if([53,64].includes(rowNumber)||s.includes("luong")||s.includes("nhan su"))return{group:"People Cost",service:"HR / Payroll"};
+ if([76,77,87].includes(rowNumber)||s.includes("khach hang")||s.includes("marketing"))return{group:"Selling Expense",service:"Sales & Marketing"};
+ if([66,72,93,99,104,110].includes(rowNumber)||s.includes("hanh chinh")||s.includes("thue nha")||s.includes("co so vat chat")||s.includes("cong chung")||s.includes("ke toan")||s.includes("phan mem")||s.includes("thue"))return{group:"G&A",service:"Admin / Office"};
+ return{group:"Other",service:"Other"};
 }
 
 function parseCostCsv(text){
-  tableRows = csvParse(text.replace(/^\uFEFF/,""));
-  const headerIndex = tableRows.findIndex(r => r.some(isMonth));
-  if(headerIndex < 0) throw new Error("Không tìm thấy header tháng Jan-Dec trong CSV.");
-  const header = tableRows[headerIndex];
-  monthCols = header.map((h,i)=>({name:String(h||"").trim(), index:i})).filter(x=>MONTHS.includes(x.name));
-  const firstMonthIndex = monthCols[0].index;
-
-  parentRows=[]; serviceRows=[]; detailRows=[];
-  let currentParent=null, currentService=null;
-
-  for(let i=headerIndex+1;i<tableRows.length;i++){
-    const label = labelBeforeMonths(tableRows[i], firstMonthIndex);
-    if(!label) continue;
-    const low = norm(label);
-    if(low.includes("so du") || low.includes("net cash") || low.includes("dong tien thuan") || low.includes("cash flow")) continue;
-
-    const months={}; let total=0;
-    monthCols.forEach(m=>{const v=money(tableRows[i][m.index]); months[m.name]=v; total+=v;});
-    if(total<=0) continue;
-
-    const cls=classify(label);
-    const row={rowIndex:i+1,label,display:cleanLabel(label),group:cls.group,service:cls.service,months,total};
-
-    if(looksParent(label)){
-      currentParent=row;
-      currentService=null;
-      parentRows.push(row);
-      if(looksServiceParent(label)) {
-        currentService=row;
-        serviceRows.push(row);
-      }
-    } else {
-      const d={...row,parent: currentService ? currentService.display : (currentParent ? currentParent.display : "Unmapped")};
-      detailRows.push(d);
-    }
-  }
-
-  debugText = "CSV rows: "+tableRows.length+"\n"+
-    "Header row: "+(headerIndex+1)+"\n"+
-    "Month columns: "+monthCols.map(x=>x.name+':'+x.index).join(', ')+"\n"+
-    "Parent rows: "+parentRows.map(x=>x.rowIndex+'. '+x.label+' = '+x.total).join('\n')+"\n\n"+
-    "Service rows: "+serviceRows.map(x=>x.rowIndex+'. '+x.label+' = '+x.total).join('\n');
+ tableRows=csvParse(text.replace(/^\uFEFF/,""));
+ const headerIndex=tableRows.findIndex(r=>r.some(isMonth));
+ if(headerIndex<0)throw new Error("Không tìm thấy header Jan-Dec trong CSV.");
+ const header=tableRows[headerIndex];
+ monthCols=header.map((h,i)=>({name:String(h||"").trim(),index:i})).filter(x=>MONTHS.includes(x.name));
+ const firstMonthIndex=monthCols[0].index;
+ parentRows=[];detailRows=[];let currentParent=null;
+ for(let i=0;i<tableRows.length;i++){
+  const sheetRow=i+1;const label=labelBeforeMonths(tableRows[i],firstMonthIndex);if(!label)continue;let months={},total=0;monthCols.forEach(m=>{const v=money(tableRows[i][m.index]);months[m.name]=v;total+=v;});if(total<=0)continue;
+  if(PARENT_ROWS.includes(sheetRow)){const cls=classify(sheetRow,label);currentParent={sheetRow,label,display:cleanLabel(label),group:cls.group,service:cls.service,months,total};parentRows.push(currentParent);}
+  else if(currentParent){detailRows.push({sheetRow,label,display:cleanLabel(label),parentRow:currentParent.sheetRow,parent:currentParent.display,group:currentParent.group,service:currentParent.service,months,total});}
+ }
+ debugText="PARENT ROWS CONFIG: "+PARENT_ROWS.join(", ")+"\nCSV ROWS: "+tableRows.length+"\nHEADER ROW: "+(headerIndex+1)+"\nMONTH COLS: "+monthCols.map(x=>x.name+":"+x.index).join(", ")+"\n\nPARENT ROWS FOUND:\n"+parentRows.map(r=>r.sheetRow+". "+r.label+" | "+r.group+" | "+r.total).join("\n")+"\n\nDETAIL ROWS: "+detailRows.length;
 }
 
-function selectedMonths(){const a=MONTHS.indexOf(filterFrom.value), b=MONTHS.indexOf(filterTo.value); if(a<0||b<0||a>b)return monthCols.map(x=>x.name); return MONTHS.slice(a,b+1).filter(m=>monthCols.some(x=>x.name===m));}
-function rowsByMonth(rows){const m=selectedMonths(); return rows.map(r=>({...r,total:amount(r,m)})).filter(r=>r.total>0);}
-function parentFiltered(){const kw=norm(filterKeyword.value); return rowsByMonth(parentRows).filter(r=>(filterGroup.value==="All"||r.group===filterGroup.value)&&(filterService.value==="All"||r.service===filterService.value)&&(!kw||norm(r.label).includes(kw)));}
-function serviceFiltered(){const kw=norm(filterKeyword.value); return rowsByMonth(serviceRows).filter(r=>(filterGroup.value==="All"||r.group===filterGroup.value)&&(filterService.value==="All"||r.service===filterService.value)&&(!kw||norm(r.label).includes(kw)));}
-function detailFiltered(){const kw=norm(filterKeyword.value); return rowsByMonth(detailRows).filter(r=>(filterParent.value==="All"||r.parent===filterParent.value)&&(filterGroup.value==="All"||r.group===filterGroup.value)&&(filterService.value==="All"||r.service===filterService.value)&&(!kw||norm(r.label).includes(kw)||norm(r.parent).includes(kw)));}
+function selectedMonths(){const a=MONTHS.indexOf(filterFrom.value),b=MONTHS.indexOf(filterTo.value);if(a<0||b<0||a>b)return monthCols.map(x=>x.name);return MONTHS.slice(a,b+1).filter(m=>monthCols.some(x=>x.name===m));}
+function rowsByMonth(rows){const m=selectedMonths();return rows.map(r=>({...r,total:amount(r,m)})).filter(r=>r.total>0);}
+function parentFiltered(){const kw=norm(filterKeyword.value);return rowsByMonth(parentRows).filter(r=>(filterGroup.value==="All"||r.group===filterGroup.value)&&(filterParent.value==="All"||String(r.sheetRow)+" - "+r.display===filterParent.value)&&(!kw||norm(r.label).includes(kw)));}
+function detailFiltered(){const kw=norm(filterKeyword.value);return rowsByMonth(detailRows).filter(r=>(filterGroup.value==="All"||r.group===filterGroup.value)&&(filterParent.value==="All"||String(r.parentRow)+" - "+r.parent===filterParent.value)&&(!kw||norm(r.label).includes(kw)||norm(r.parent).includes(kw)));}
 function sum(rows){return rows.reduce((s,r)=>s+r.total,0);}
-function group(rows,field){const m=new Map(); rows.forEach(r=>m.set(r[field],(m.get(r[field])||0)+r.total)); return [...m.entries()].map(([name,amount])=>({name,amount})).filter(x=>x.amount>0).sort((a,b)=>b.amount-a.amount);}
 function card(t,v,h,c){return`<div class="card"><div class="label">${t}</div><div class="value ${c}">${v}</div><div class="helper">${h}</div></div>`;}
-function prog(t,a,tg,unit){const rate=tg?a/tg*100:0; const ok=rate<=100,w=rate<=115,cls=ok?"green":w?"yellow":"red"; return`<div class="card"><div class="label">${t}</div><div class="value ${cls}">${unit==="%"?pct(a):vnd(a)}</div><div class="helper">Target: ${unit==="%"?pct(tg):vnd(tg)} • ${pct(rate)}</div><div class="progress"><div class="progress-fill ${cls}" style="width:${Math.min(rate,100)}%"></div></div></div>`;}
-function barList(id,data,cls=""){const max=Math.max(...data.map(x=>x.amount),1); document.getElementById(id).innerHTML=data.slice(0,12).map(x=>`<div class="bar-row"><div class="bar-top"><span>${x.name}</span><b>${vnd(x.amount)}</b></div><div class="track"><div class="fill ${cls}" style="width:${Math.max(2,x.amount/max*100)}%"></div></div></div>`).join("")||"<div class='small'>No data</div>";}
-function fillSelect(id,vals){const el=document.getElementById(id),cur=el.value||"All"; const opts=["All",...Array.from(new Set(vals.filter(Boolean))).sort()]; el.innerHTML=opts.map(x=>`<option>${x}</option>`).join(""); el.value=opts.includes(cur)?cur:"All";}
+function prog(t,a,tg,unit){const rate=tg?a/tg*100:0,ok=rate<=100,w=rate<=115,cls=ok?"green":w?"yellow":"red";return`<div class="card"><div class="label">${t}</div><div class="value ${cls}">${unit==="%"?pct(a):vnd(a)}</div><div class="helper">Target: ${unit==="%"?pct(tg):vnd(tg)} • ${pct(rate)}</div><div class="progress"><div class="fill ${cls}" style="width:${Math.min(rate,100)}%;height:12px"></div></div></div>`;}
+function barList(id,data,cls=""){const max=Math.max(...data.map(x=>x.amount),1);document.getElementById(id).innerHTML=data.slice(0,15).map(x=>`<div class="bar-row"><div class="bar-top"><span>${x.name}</span><b>${vnd(x.amount)}</b></div><div class="track"><div class="fill ${cls}" style="width:${Math.max(2,x.amount/max*100)}%"></div></div></div>`).join("")||"<div class='small'>No data</div>";}
+function fillSelect(id,vals){const el=document.getElementById(id),cur=el.value||"All";const opts=["All",...Array.from(new Set(vals.filter(Boolean))).sort()];el.innerHTML=opts.map(x=>`<option>${x}</option>`).join("");el.value=opts.includes(cur)?cur:"All";}
 
-function setup(){
-  const months=monthCols.map(x=>x.name);
-  filterFrom.innerHTML=months.map(m=>`<option>${m}</option>`).join("");
-  filterTo.innerHTML=months.map(m=>`<option>${m}</option>`).join("");
-  filterFrom.value=months[0]||"Jan"; filterTo.value=months[months.length-1]||"Dec";
-  fillSelect("filterGroup", parentRows.concat(serviceRows).map(r=>r.group));
-  fillSelect("filterService", parentRows.concat(serviceRows).map(r=>r.service));
-  fillSelect("filterParent", detailRows.map(r=>r.parent));
-  ["filterFrom","filterTo","filterGroup","filterService","filterParent","filterDebug"].forEach(id=>document.getElementById(id).onchange=render);
-}
+function setup(){const months=monthCols.map(x=>x.name);filterFrom.innerHTML=months.map(m=>`<option>${m}</option>`).join("");filterTo.innerHTML=months.map(m=>`<option>${m}</option>`).join("");filterFrom.value=months[0]||"Jan";filterTo.value=months[months.length-1]||"Dec";fillSelect("filterGroup",parentRows.map(r=>r.group));fillSelect("filterParent",parentRows.map(r=>String(r.sheetRow)+" - "+r.display));["filterFrom","filterTo","filterGroup","filterParent","filterDebug"].forEach(id=>document.getElementById(id).onchange=render);}
 
 function render(){
-  const p=parentFiltered(), s=serviceFiltered(), d=detailFiltered(), months=selectedMonths();
-  const total=sum(p);
-  const cogs=sum(p.filter(r=>r.group==="COGS"));
-  const people=sum(p.filter(r=>r.group==="People Cost"));
-  const selling=sum(p.filter(r=>r.group==="Selling Expense"));
-  const ga=sum(p.filter(r=>r.group==="G&A"));
-  const other=Math.max(total-cogs-people-selling-ga,0);
-  const opex=people+selling+ga+other;
-  const cogsPct=total?cogs/total*100:0, peoplePct=total?people/total*100:0, opexPct=total?opex/total*100:0;
-
-  const monthly=months.map(m=>({name:m,amount:p.reduce((x,r)=>x+(r.months[m]||0),0)}));
-  const avg=months.length?total/months.length:0;
-  let vol=0; for(let i=1;i<monthly.length;i++){if(monthly[i-1].amount)vol+=Math.abs((monthly[i].amount-monthly[i-1].amount)/monthly[i-1].amount*100);} vol=monthly.length>1?vol/(monthly.length-1):0;
-
-  let score=0; if(total<=target("targetBudget"))score+=25; if(cogsPct<=target("targetCogs"))score+=25; if(peoplePct<=target("targetPeople"))score+=20; if(opexPct<=target("targetOpex"))score+=20; if(vol<=target("targetVol"))score+=10;
-
-  kpis.innerHTML=card("Total Cost",vnd(total),"Parent rows sau filter","red")+card("COGS %",pct(cogsPct),vnd(cogs),"blue")+card("People %",pct(peoplePct),vnd(people),"yellow")+card("OPEX %",pct(opexPct),vnd(opex),"purple");
-  progressCards.innerHTML=prog("Budget Usage",total,target("targetBudget"),"VND")+prog("COGS % vs Target",cogsPct,target("targetCogs"),"%")+prog("People % vs Target",peoplePct,target("targetPeople"),"%")+prog("OPEX % vs Target",opexPct,target("targetOpex"),"%");
-
-  scoreBox.innerHTML=`<div class="score ${score>=80?"green":score>=60?"yellow":"red"}">${score}/100</div><div class="helper">${score>=80?"Healthy":score>=60?"Need optimization":"High risk"} • Volatility ${pct(vol)} • Avg burn ${vnd(avg)}</div>`;
-  barList("structure",[
-    {name:`COGS ${pct(cogsPct)}`,amount:cogs},{name:`People ${pct(peoplePct)}`,amount:people},{name:`Selling`,amount:selling},{name:`G&A`,amount:ga},{name:`Other`,amount:other}
-  ],"red");
-
-  const maxM=Math.max(...monthly.map(x=>x.amount),1);
-  trend.innerHTML=monthly.map(x=>`<div class="month"><div class="monthbar" style="height:${Math.max(12,x.amount/maxM*230)}px"></div><div class="monthlabel">${x.name}</div><div class="monthvalue">${compact(x.amount)}</div></div>`).join("");
-
-  variance.innerHTML=monthly.map((x,i)=>{const mom=i&&monthly[i-1].amount?(x.amount-monthly[i-1].amount)/monthly[i-1].amount*100:0; return`<div class="bar-row"><div class="bar-top"><span>${x.name}</span><b class="${mom>20?"red":mom<-20?"green":"yellow"}">${i?pct(mom):"Base"}</b></div><div class="track"><div class="fill ${mom>20?"red":mom<-20?"green":"yellow"}" style="width:${Math.min(Math.abs(mom),100)}%"></div></div></div>`;}).join("");
-
-  barList("cogsService",group(s.filter(r=>r.group==="COGS"),"service"),"blue");
-  barList("opex",[
-    {name:"People Cost",amount:people},{name:"Selling Expense",amount:selling},{name:"G&A",amount:ga},{name:"Other",amount:other}
-  ],"purple");
-  barList("topDrivers",p.map(r=>({name:r.display,amount:r.total})).sort((a,b)=>b.amount-a.amount),"yellow");
-  detailTable.innerHTML=d.sort((a,b)=>b.total-a.total).slice(0,60).map(r=>`<tr><td><span class="tag">${r.parent}</span></td><td>${r.display}</td><td class="right"><b>${vnd(r.total)}</b></td></tr>`).join("")||"<tr><td colspan='3' class='small'>No detail rows.</td></tr>";
-
-  debugBox.style.display=filterDebug.value==="Show"?"block":"none";
-  debugBox.textContent=debugText;
+ const p=parentFiltered(),d=detailFiltered(),months=selectedMonths();
+ const total=sum(p),cogs=sum(p.filter(r=>r.group==="COGS")),people=sum(p.filter(r=>r.group==="People Cost")),selling=sum(p.filter(r=>r.group==="Selling Expense")),ga=sum(p.filter(r=>r.group==="G&A")),other=sum(p.filter(r=>r.group==="Other")),opex=people+selling+ga+other;
+ const cogsPct=total?cogs/total*100:0,peoplePct=total?people/total*100:0,opexPct=total?opex/total*100:0,avg=months.length?total/months.length:0;
+ const monthly=months.map(m=>({name:m,amount:p.reduce((x,r)=>x+(r.months[m]||0),0)}));let vol=0;for(let i=1;i<monthly.length;i++){if(monthly[i-1].amount)vol+=Math.abs((monthly[i].amount-monthly[i-1].amount)/monthly[i-1].amount*100);}vol=monthly.length>1?vol/(monthly.length-1):0;
+ let score=0;if(total<=target("targetBudget"))score+=25;if(cogsPct<=target("targetCogs"))score+=25;if(peoplePct<=target("targetPeople"))score+=20;if(opexPct<=target("targetOpex"))score+=20;if(vol<=target("targetVol"))score+=10;
+ kpis.innerHTML=card("Total Cost",vnd(total),"Chỉ cộng parent rows","red")+card("COGS %",pct(cogsPct),vnd(cogs),"blue")+card("People %",pct(peoplePct),vnd(people),"yellow")+card("OPEX %",pct(opexPct),vnd(opex),"purple");
+ progressCards.innerHTML=prog("Budget Usage",total,target("targetBudget"),"VND")+prog("COGS % vs Target",cogsPct,target("targetCogs"),"%")+prog("People % vs Target",peoplePct,target("targetPeople"),"%")+prog("OPEX % vs Target",opexPct,target("targetOpex"),"%");
+ scoreBox.innerHTML=`<div class="score ${score>=80?"green":score>=60?"yellow":"red"}">${score}/100</div><div class="helper">${score>=80?"Healthy":score>=60?"Need optimization":"High risk"} • Volatility ${pct(vol)} • Avg burn ${vnd(avg)}</div>`;
+ barList("structure",[{name:`COGS ${pct(cogsPct)}`,amount:cogs},{name:`People ${pct(peoplePct)}`,amount:people},{name:`Selling`,amount:selling},{name:`G&A`,amount:ga},{name:`Other`,amount:other}],"red");
+ const maxM=Math.max(...monthly.map(x=>x.amount),1);trend.innerHTML=monthly.map(x=>`<div class="month"><div class="monthbar" style="height:${Math.max(12,x.amount/maxM*230)}px"></div><div class="monthlabel">${x.name}</div><div class="monthvalue">${compact(x.amount)}</div></div>`).join("");
+ variance.innerHTML=monthly.map((x,i)=>{const mom=i&&monthly[i-1].amount?(x.amount-monthly[i-1].amount)/monthly[i-1].amount*100:0;return`<div class="bar-row"><div class="bar-top"><span>${x.name}</span><b class="${mom>20?"red":mom<-20?"green":"yellow"}">${i?pct(mom):"Base"}</b></div><div class="track"><div class="fill ${mom>20?"red":mom<-20?"green":"yellow"}" style="width:${Math.min(Math.abs(mom),100)}%"></div></div></div>`;}).join("");
+ barList("topDrivers",p.map(r=>({name:r.sheetRow+" - "+r.display,amount:r.total})).sort((a,b)=>b.amount-a.amount),"yellow");
+ barList("cogsService",p.filter(r=>r.group==="COGS").map(r=>({name:r.sheetRow+" - "+r.display,amount:r.total})),"blue");
+ barList("opex",[{name:"People Cost",amount:people},{name:"Selling Expense",amount:selling},{name:"G&A",amount:ga},{name:"Other",amount:other}],"purple");
+ detailTable.innerHTML=d.sort((a,b)=>b.total-a.total).slice(0,80).map(r=>`<tr><td>${r.parentRow} - ${r.parent}</td><td>${r.sheetRow}</td><td>${r.display}</td><td class="right"><b>${vnd(r.total)}</b></td></tr>`).join("")||"<tr><td colspan='4' class='small'>No detail rows.</td></tr>";
+ debugBox.style.display=filterDebug.value==="Show"?"block":"none";debugBox.textContent=debugText;
 }
 
-async function load(){
-  try{
-    status.innerHTML="Đang tải CSV mới...";
-    const res=await fetch(CSV_URL+"&cache="+Date.now());
-    if(!res.ok)throw new Error("Fetch CSV failed: "+res.status);
-    const text=await res.text();
-    parseCostCsv(text);
-    setup();
-    render();
-    status.innerHTML=`Đã tải sheet mới thành công. Parent rows: <b>${parentRows.length}</b>, detail rows: <b>${detailRows.length}</b>.`;
-  }catch(e){status.innerHTML="<span class='red'>"+e.message+"</span>";}
-}
+async function load(){try{status.innerHTML="Đang tải CSV cũ...";const res=await fetch(CSV_URL+"&cache="+Date.now());if(!res.ok)throw new Error("Fetch CSV failed: "+res.status);const text=await res.text();parseCostCsv(text);setup();render();status.innerHTML=`Đã tải thành công CSV cũ. Parent config: <b>${PARENT_ROWS.length}</b>; bắt được: <b>${parentRows.length}</b>; detail rows: <b>${detailRows.length}</b>.`;}catch(e){status.innerHTML="<span class='red'>"+e.message+"</span>";}}
 load();
 </script>
 </body>
