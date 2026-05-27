@@ -35,12 +35,12 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;
 </head>
 <body>
 <h1>Goldnet Cost Management Dashboard</h1>
-<div class="sub">COGS • Selling Expense • G&A • People Cost • KPI Target & Progress</div>
+<div class="sub">Không cộng trùng dòng tổng • COGS • Selling • G&A • People Cost • KPI Target & Progress</div>
 <div id="status" class="status">Đang tải dữ liệu từ Google Sheet...</div>
 
 <div class="targets">
   <div><label>Target Total Cost / Budget</label><input id="targetTotalCost" value="9000000000" oninput="render()"></div>
-  <div><label>Target COGS / Revenue %</label><input id="targetCogsPct" value="60" oninput="render()"></div>
+  <div><label>Target COGS / Total Cost %</label><input id="targetCogsPct" value="60" oninput="render()"></div>
   <div><label>Target People Cost %</label><input id="targetPeoplePct" value="18" oninput="render()"></div>
   <div><label>Target Selling Expense %</label><input id="targetSellingPct" value="8" oninput="render()"></div>
   <div><label>Target G&A %</label><input id="targetGaPct" value="10" oninput="render()"></div>
@@ -59,19 +59,21 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;
 <div id="progressCards" class="grid"></div>
 
 <div class="grid2">
-  <div class="card"><h3>Monthly Cost Trend</h3><div class="chart-sub">Actual payment theo tháng</div><div id="trend" class="months"></div></div>
-  <div class="card"><h3>Cost Structure %</h3><div class="chart-sub">Tỷ trọng nhóm chi phí trên Total Cost</div><div id="structure"></div></div>
-  <div class="card"><h3>COGS by Service</h3><div class="chart-sub">Livestream / Video / Shop / Affiliate</div><div id="cogsService"></div></div>
-  <div class="card"><h3>Operating Expense Breakdown</h3><div class="chart-sub">Selling / People / G&A / Other</div><div id="opex"></div></div>
-  <div class="card"><h3>Top Cost Lines</h3><div class="chart-sub">Những dòng chi phí lớn nhất</div><div id="topLines"></div></div>
+  <div class="card"><h3>Monthly Cost Trend</h3><div class="chart-sub">Chỉ tính các dòng tổng cấp lớn, không cộng dòng con</div><div id="trend" class="months"></div></div>
+  <div class="card"><h3>Cost Structure %</h3><div class="chart-sub">COGS / People / Selling / G&A / Other</div><div id="structure"></div></div>
+  <div class="card"><h3>COGS by Service</h3><div class="chart-sub">Chỉ dùng các dòng tổng COGS service: 1.1, 1.2, 1.3, 1.4</div><div id="cogsService"></div></div>
+  <div class="card"><h3>Operating Expense Breakdown</h3><div class="chart-sub">Chi phí quản lý, bán hàng, nhân sự</div><div id="opex"></div></div>
+  <div class="card"><h3>Top Cost Lines</h3><div class="chart-sub">Top dòng tổng cấp lớn, không double count</div><div id="topLines"></div></div>
   <div class="card"><h3>Monthly Alert</h3><div class="chart-sub">Tháng vượt 120% trung bình kỳ lọc</div><div id="alerts"></div></div>
-  <div class="card"><h3>Detailed Cost Table</h3><div class="chart-sub">Breakdown theo nhóm và dòng chi phí</div><div style="overflow:auto"><table><thead><tr><th>Group</th><th>Service</th><th>Cost Line</th><th class="right">Amount</th><th class="right">%</th></tr></thead><tbody id="detailTable"></tbody></table></div></div>
+  <div class="card"><h3>Drilldown Detail</h3><div class="chart-sub">Dòng con chỉ dùng để phân tích chi tiết, không cộng vào tổng</div><div style="overflow:auto"><table><thead><tr><th>Parent</th><th>Detail Line</th><th class="right">Amount</th><th class="right">% Parent</th></tr></thead><tbody id="detailTable"></tbody></table></div></div>
   <div class="card"><h3>KPI Evaluation</h3><div class="chart-sub">Đánh giá so với target</div><div id="kpiEval"></div></div>
 </div>
 
 <script>
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSW8UJiUFKOpEUtDPtjfVRJ35MRdBYTgT6v_3wsoqm6ORgPYE38Q50aO3z4PKq9LSHBwo5jDAgpRLcF/pub?gid=1702940056&single=true&output=csv";
-let rawRows = [];
+let parentRows = [];
+let serviceRows = [];
+let detailRows = [];
 let monthCols = [];
 const MONTH_ORDER = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -87,39 +89,73 @@ function parseCSVFull(text){
   row.push(cell.trim()); if(row.some(x=>String(x).trim()!=="")) rows.push(row); return rows;
 }
 function txt(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim()}
-function num(v){if(!v)return 0; const n=String(v).replace(/\s/g,"").replace(/₫|VND|đ/gi,"").replace(/,/g,"").replace(/\./g,"").replace(/[()]/g,""); return Number(n)||0}
+function cleanName(s){return String(s||"").replace(/^\d+(\.\d+)?\.\s*/,"").trim()}
+function num(v){if(!v)return 0; const n=String(v).replace(/\s/g,"").replace(/₫|VND|đ|-/gi,"").replace(/,/g,"").replace(/\./g,"").replace(/[()]/g,""); return Number(n)||0}
 function vnd(v){return new Intl.NumberFormat("vi-VN",{style:"currency",currency:"VND",maximumFractionDigits:0}).format(v||0)}
 function pct(v){return (v||0).toFixed(1)+"%"}
 function compact(v){if(Math.abs(v)>=1e9)return (v/1e9).toFixed(1)+"B"; if(Math.abs(v)>=1e6)return (v/1e6).toFixed(0)+"M"; return new Intl.NumberFormat("vi-VN").format(v||0)}
 function target(id){return num(document.getElementById(id).value)}
+function isTopParent(line){return /^\d+\.\s/.test(String(line||"").trim())}
+function isServiceParent(line){return /^1\.\d+\.\s/.test(String(line||"").trim())}
 
-function classify(line){
+function classifyParent(line){
   const s=txt(line);
-  if(s.includes("gia von dich vu livestream")||s.includes("livestream")) return {group:"COGS",service:"Livestream"};
-  if(s.includes("gia von dich vu video")||s.includes("video")||s.includes("koc video")||s.includes("studio")||s.includes("quay")) return {group:"COGS",service:"Video Production"};
-  if(s.includes("shop")) return {group:"COGS",service:"Shop Operation"};
-  if(s.includes("affiliate")||s.includes("kol/koc")) return {group:"COGS",service:"Affiliate"};
-  if(s.includes("luong")||s.includes("nhan su")||s.includes("phuc loi")||s.includes("bao hiem")||s.includes("dao tao")||s.includes("tuyen dung")||s.includes("onboarding")) return {group:"People Cost",service:"HR / Payroll"};
-  if(s.includes("khach hang")||s.includes("marketing")||s.includes("brand")||s.includes("website")||s.includes("seo")||s.includes("quang cao")||s.includes("tiep khach")||s.includes("hoa hong")) return {group:"Selling Expense",service:"Sales & Marketing"};
-  if(s.includes("thue van phong")||s.includes("dien")||s.includes("internet")||s.includes("nuoc")||s.includes("co so vat chat chung")||s.includes("hanh chinh")||s.includes("van phong pham")||s.includes("pantry")||s.includes("ve sinh")||s.includes("giu xe")||s.includes("cong chung")||s.includes("ke toan")||s.includes("ngan hang")||s.includes("thue")||s.includes("phan mem")) return {group:"G&A",service:"Admin / Office"};
+  if(s.includes("cogs")) return {group:"COGS",service:"COGS"};
+  if(s.includes("luong")||s.includes("bhxh")||s.includes("nhan su")) return {group:"People Cost",service:"HR / Payroll"};
+  if(s.includes("khach hang")||s.includes("marketing")) return {group:"Selling Expense",service:"Sales & Marketing"};
+  if(s.includes("hanh chinh")||s.includes("thue nha")||s.includes("co so vat chat")||s.includes("cong chung")||s.includes("dich vu ke toan")||s.includes("phan mem")||s.includes("thue")||s.includes("le phi")||s.includes("phi khac")) return {group:"G&A",service:"Admin / Office"};
   return {group:"Other",service:"Other"};
 }
+function classifyService(line){
+  const s=txt(line);
+  if(s.includes("livestream")) return {group:"COGS",service:"Livestream"};
+  if(s.includes("video")) return {group:"COGS",service:"Video Production"};
+  if(s.includes("shop")) return {group:"COGS",service:"Shop Operation"};
+  if(s.includes("affiliate")) return {group:"COGS",service:"Affiliate"};
+  return {group:"COGS",service:"Other COGS"};
+}
+
 function parseCostCsv(text){
   const table=parseCSVFull(text.replace(/^\uFEFF/,""));
   const headerIndex=table.findIndex(r=>r.some(c=>MONTH_ORDER.includes(String(c).trim())));
-  if(headerIndex<0) return [];
+  if(headerIndex<0) return;
   const header=table[headerIndex];
   const monthIndexes=[];
   header.forEach((h,i)=>{if(MONTH_ORDER.includes(String(h).trim())) monthIndexes.push({name:String(h).trim(),index:i});});
   monthCols=monthIndexes.map(x=>x.name);
-  const rows=[];
-  for(let i=headerIndex+1;i<table.length;i++){const line=table[i][1] || table[i][0] || "";
-    if(!line || txt(line).includes("total cost")) continue;
-    const cls=classify(line); const months={}; let total=0;
+  parentRows=[]; serviceRows=[]; detailRows=[];
+  let currentTopParent=null;
+  let currentServiceParent=null;
+
+  for(let i=headerIndex+1;i<table.length;i++){
+    const line=table[i][1] || table[i][0] || "";
+    if(!line || txt(line).includes("total cost") || txt(line).includes("dong tien") || txt(line).includes("net cash")) continue;
+    const months={}; let total=0;
     monthIndexes.forEach(m=>{const amount=num(table[i][m.index]); months[m.name]=amount; total+=amount;});
-    if(total>0) rows.push({line,group:cls.group,service:cls.service,months,total});
+    if(total<=0) continue;
+
+    if(isTopParent(line)){
+      const cls=classifyParent(line);
+      currentTopParent={line,display:cleanName(line),group:cls.group,service:cls.service,months,total,type:"topParent"};
+      currentServiceParent=null;
+      parentRows.push(currentTopParent);
+      continue;
+    }
+
+    if(isServiceParent(line)){
+      const cls=classifyService(line);
+      currentServiceParent={line,display:cleanName(line),group:cls.group,service:cls.service,months,total,type:"serviceParent",parent:currentTopParent?.display||"COGS"};
+      serviceRows.push(currentServiceParent);
+      continue;
+    }
+
+    detailRows.push({
+      line, display:cleanName(line), group:currentServiceParent?.group || currentTopParent?.group || "Other",
+      service:currentServiceParent?.service || currentTopParent?.service || "Other",
+      parent:currentServiceParent?.display || currentTopParent?.display || "Unmapped",
+      months,total,type:"detail"
+    });
   }
-  return rows;
 }
 function getSelectedMonths(){
   const from=document.getElementById("filterFrom").value, to=document.getElementById("filterTo").value;
@@ -127,10 +163,22 @@ function getSelectedMonths(){
   if(a<0||b<0||a>b) return monthCols;
   return MONTH_ORDER.slice(a,b+1).filter(m=>monthCols.includes(m));
 }
-function filteredRows(){
-  const g=document.getElementById("filterGroup").value, s=document.getElementById("filterService").value, d=document.getElementById("filterDetail").value, months=getSelectedMonths();
-  return rawRows.map(r=>({...r,total:months.reduce((sum,m)=>sum+(r.months[m]||0),0)}))
-    .filter(r=>r.total>0).filter(r=>(g==="All"||r.group===g)&&(s==="All"||r.service===s)&&(d==="All"||r.line===d));
+function withSelectedTotal(rows){
+  const months=getSelectedMonths();
+  return rows.map(r=>({...r,total:months.reduce((sum,m)=>sum+(r.months[m]||0),0)})).filter(r=>r.total>0);
+}
+function filteredParents(){
+  const g=document.getElementById("filterGroup").value, s=document.getElementById("filterService").value, d=document.getElementById("filterDetail").value;
+  return withSelectedTotal(parentRows)
+    .filter(r=>(g==="All"||r.group===g)&&(s==="All"||r.service===s)&&(d==="All"||r.display===d));
+}
+function filteredServices(){
+  const g=document.getElementById("filterGroup").value, s=document.getElementById("filterService").value;
+  return withSelectedTotal(serviceRows).filter(r=>(g==="All"||r.group===g)&&(s==="All"||r.service===s));
+}
+function filteredDetails(){
+  const g=document.getElementById("filterGroup").value, s=document.getElementById("filterService").value, d=document.getElementById("filterDetail").value;
+  return withSelectedTotal(detailRows).filter(r=>(g==="All"||r.group===g)&&(s==="All"||r.service===s)&&(d==="All"||r.display===d||r.parent===d));
 }
 function sum(rows){return rows.reduce((a,b)=>a+b.total,0)}
 function groupSum(rows,field){const map=new Map(); rows.forEach(r=>map.set(r[field],(map.get(r[field])||0)+r.total)); return [...map.entries()].map(([name,amount])=>({name,amount})).filter(x=>x.amount>0).sort((a,b)=>b.amount-a.amount)}
@@ -148,20 +196,27 @@ function bars(id,data,cls=""){
 }
 function fillFilter(id,values,defaultValue="All"){const el=document.getElementById(id), current=el.value||defaultValue; const opts=["All",...Array.from(new Set(values.filter(Boolean))).sort()]; el.innerHTML=opts.map(x=>`<option value="${x}">${x}</option>`).join(""); el.value=opts.includes(current)?current:defaultValue;}
 function setupFilters(){
-  fillFilter("filterGroup",rawRows.map(r=>r.group)); fillFilter("filterService",rawRows.map(r=>r.service)); fillFilter("filterDetail",rawRows.map(r=>r.line));
+  fillFilter("filterGroup",[...parentRows,...serviceRows].map(r=>r.group));
+  fillFilter("filterService",[...parentRows,...serviceRows].map(r=>r.service));
+  fillFilter("filterDetail",[...parentRows,...serviceRows,...detailRows].map(r=>r.display||r.parent));
   document.getElementById("filterFrom").innerHTML=monthCols.map(m=>`<option value="${m}">${m}</option>`).join("");
   document.getElementById("filterTo").innerHTML=monthCols.map(m=>`<option value="${m}">${m}</option>`).join("");
   document.getElementById("filterFrom").value=monthCols[0]||"Jan"; document.getElementById("filterTo").value=monthCols[monthCols.length-1]||"Dec";
   ["filterGroup","filterService","filterFrom","filterTo","filterDetail"].forEach(id=>document.getElementById(id).onchange=render);
 }
 function render(){
-  const rows=filteredRows(), total=sum(rows);
-  const cogs=sum(rows.filter(r=>r.group==="COGS")), people=sum(rows.filter(r=>r.group==="People Cost")), selling=sum(rows.filter(r=>r.group==="Selling Expense")), ga=sum(rows.filter(r=>r.group==="G&A")), other=sum(rows.filter(r=>r.group==="Other"));
-  const months=getSelectedMonths(), avg=months.length?total/months.length:0, top=rows[0]||{line:"-",total:0};
+  const parents=filteredParents(), services=filteredServices(), details=filteredDetails();
+  const total=sum(parents);
+  const cogs=sum(parents.filter(r=>r.group==="COGS"));
+  const people=sum(parents.filter(r=>r.group==="People Cost"));
+  const selling=sum(parents.filter(r=>r.group==="Selling Expense"));
+  const ga=sum(parents.filter(r=>r.group==="G&A"));
+  const other=sum(parents.filter(r=>r.group==="Other"));
+  const months=getSelectedMonths(), avg=months.length?total/months.length:0, top=parents.sort((a,b)=>b.total-a.total)[0]||{display:"-",total:0};
   const cogsPct=total?cogs/total*100:0, peoplePct=total?people/total*100:0, sellingPct=total?selling/total*100:0, gaPct=total?ga/total*100:0;
 
   document.getElementById("kpis1").innerHTML=
-    kpi("Total Cost",vnd(total),`${rows.length} cost lines sau filter`,"bad")+
+    kpi("Total Cost",vnd(total),`Chỉ cộng dòng tổng cấp lớn`,"bad")+
     kpi("COGS %",pct(cogsPct),`${vnd(cogs)} / Total Cost`,"blue")+
     kpi("People Cost %",pct(peoplePct),`${vnd(people)} / Total Cost`,"warn")+
     kpi("Avg Monthly Cost",vnd(avg),`${months.length} tháng trong kỳ lọc`,"purple");
@@ -169,7 +224,7 @@ function render(){
     kpi("Selling Expense %",pct(sellingPct),vnd(selling),"green")+
     kpi("G&A %",pct(gaPct),vnd(ga),"purple")+
     kpi("Other Cost %",pct(total?other/total*100:0),vnd(other),"warn")+
-    kpi("Largest Cost Driver",top.line,vnd(top.total),"blue");
+    kpi("Largest Parent Cost",top.display,vnd(top.total),"blue");
 
   document.getElementById("progressCards").innerHTML=
     progressCard("Budget Usage",total,target("targetTotalCost"),"VND",true)+
@@ -177,32 +232,38 @@ function render(){
     progressCard("People Cost % vs Target",peoplePct,target("targetPeoplePct"),"%",true)+
     progressCard("Selling % vs Target",sellingPct,target("targetSellingPct"),"%",true);
 
-  const monthly=months.map(m=>({name:m,amount:rows.reduce((s,r)=>s+(r.months[m]||0),0)})), maxM=Math.max(...monthly.map(x=>x.amount),1);
+  const monthly=months.map(m=>({name:m,amount:parents.reduce((s,r)=>s+(r.months[m]||0),0)})), maxM=Math.max(...monthly.map(x=>x.amount),1);
   document.getElementById("trend").innerHTML=monthly.map(x=>`<div class="month"><div class="monthbar" style="height:${Math.max(12,x.amount/maxM*230)}px"></div><div class="monthlabel">${x.name}</div><div class="monthvalue">${compact(x.amount)}</div></div>`).join("");
 
   bars("structure",[
     {name:`COGS (${pct(cogsPct)})`,amount:cogs},{name:`Selling (${pct(sellingPct)})`,amount:selling},{name:`People (${pct(peoplePct)})`,amount:people},{name:`G&A (${pct(gaPct)})`,amount:ga},{name:"Other",amount:other}
   ],"red");
-  bars("cogsService",groupSum(rows.filter(r=>r.group==="COGS"),"service"),"blue");
+  bars("cogsService",groupSum(services,"service"),"blue");
   bars("opex",[
     {name:`Selling Expense - ${pct(sellingPct)}`,amount:selling},{name:`People Cost - ${pct(peoplePct)}`,amount:people},{name:`G&A - ${pct(gaPct)}`,amount:ga},{name:"Other",amount:other}
   ],"purple");
-  bars("topLines",rows.map(r=>({name:r.line,amount:r.total})).sort((a,b)=>b.amount-a.amount),"yellow");
+  bars("topLines",parents.map(r=>({name:r.display,amount:r.total})).sort((a,b)=>b.amount-a.amount),"yellow");
 
   const alertRows=monthly.filter(x=>x.amount>avg*1.2);
   document.getElementById("alerts").innerHTML=alertRows.length?alertRows.map(x=>`<div class="bar-row"><div class="bar-top"><span>${x.name} vượt 120% trung bình</span><b class="bad">${vnd(x.amount)}</b></div></div>`).join(""):`<div class="small">Không có tháng vượt 120% trung bình kỳ lọc.</div>`;
-  document.getElementById("detailTable").innerHTML=rows.sort((a,b)=>b.total-a.total).slice(0,30).map(r=>`<tr><td><span class="tag">${r.group}</span></td><td>${r.service}</td><td>${r.line}</td><td class="right"><b>${vnd(r.total)}</b></td><td class="right">${pct(total?r.total/total*100:0)}</td></tr>`).join("");
+
+  document.getElementById("detailTable").innerHTML=details.sort((a,b)=>b.total-a.total).slice(0,40).map(r=>{
+    const parent=services.find(p=>p.display===r.parent)||parents.find(p=>p.display===r.parent);
+    const parentTotal=parent?withSelectedTotal([parent])[0]?.total||0:0;
+    return `<tr><td><span class="tag">${r.parent}</span></td><td>${r.display}</td><td class="right"><b>${vnd(r.total)}</b></td><td class="right">${pct(parentTotal?r.total/parentTotal*100:0)}</td></tr>`;
+  }).join("");
+
   document.getElementById("kpiEval").innerHTML=[
-    {name:"Budget Usage",actual:total,target:target("targetTotalCost"),inverse:true,unit:"VND"},
-    {name:"COGS %",actual:cogsPct,target:target("targetCogsPct"),inverse:true,unit:"%"},
-    {name:"People Cost %",actual:peoplePct,target:target("targetPeoplePct"),inverse:true,unit:"%"},
-    {name:"Selling Expense %",actual:sellingPct,target:target("targetSellingPct"),inverse:true,unit:"%"},
-    {name:"G&A %",actual:gaPct,target:target("targetGaPct"),inverse:true,unit:"%"}
+    {name:"Budget Usage",actual:total,target:target("targetTotalCost"),unit:"VND"},
+    {name:"COGS %",actual:cogsPct,target:target("targetCogsPct"),unit:"%"},
+    {name:"People Cost %",actual:peoplePct,target:target("targetPeoplePct"),unit:"%"},
+    {name:"Selling Expense %",actual:sellingPct,target:target("targetSellingPct"),unit:"%"},
+    {name:"G&A %",actual:gaPct,target:target("targetGaPct"),unit:"%"}
   ].map(x=>`<div class="bar-row"><div class="bar-top"><span>${x.name}</span><b>${x.unit==='%'?pct(x.actual):vnd(x.actual)} / ${x.unit==='%'?pct(x.target):vnd(x.target)}</b></div><div class="track"><div class="fill ${x.actual<=x.target?'green':x.actual<=x.target*1.15?'yellow':'red'}" style="width:${Math.min(x.target?x.actual/x.target*100:0,100)}%"></div></div></div>`).join("");
 }
 async function load(){
   const st=document.getElementById("status");
-  try{const res=await fetch(CSV_URL); if(!res.ok) throw new Error("Không đọc được CSV chi phí."); rawRows=parseCostCsv(await res.text()); setupFilters(); render(); st.innerHTML=`Đã tải thành công <b>${rawRows.length}</b> dòng chi phí từ ACTUAL PAYMENT.`;}
+  try{const res=await fetch(CSV_URL); if(!res.ok) throw new Error("Không đọc được CSV chi phí."); parseCostCsv(await res.text()); setupFilters(); render(); st.innerHTML=`Đã tải thành công. Logic mới: <b>chỉ cộng dòng tổng in đậm/cấp lớn</b>; dòng con chỉ dùng drilldown, không double count.`;}
   catch(e){st.textContent=e.message}
 }
 load();
