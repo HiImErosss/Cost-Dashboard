@@ -34,8 +34,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;
 <div><label>Dịch vụ / Function</label><select id="filterService"></select></div>
 <div><label>Tháng từ</label><select id="filterFrom"></select></div>
 <div><label>Tháng đến</label><select id="filterTo"></select></div>
-<div><label>Chi tiết</label><select id="filterDetail"></select></div>
-</div></div>
+<div><label>Chi tiết drilldown</label><select id="filterDetail"></select></div>
+</div><div class="small">Lưu ý: filter “Chi tiết drilldown” chỉ ảnh hưởng bảng Drilldown, không ảnh hưởng KPI tổng để tránh KPI = 0 khi chọn dòng con.</div></div>
 
 <div id="kpis" class="grid"></div>
 <div id="progressCards" class="grid"></div>
@@ -74,20 +74,15 @@ function vnd(v){return new Intl.NumberFormat("vi-VN",{style:"currency",currency:
 function pct(v){return (v||0).toFixed(1)+"%"}
 function compact(v){if(Math.abs(v)>=1e9)return (v/1e9).toFixed(1)+"B"; if(Math.abs(v)>=1e6)return (v/1e6).toFixed(0)+"M"; return new Intl.NumberFormat("vi-VN").format(v||0)}
 function target(id){return num(document.getElementById(id).value)}
-function labelOf(row,firstMonthIndex){
-  for(let i=0;i<firstMonthIndex;i++){const v=String(row[i]||"").trim(); if(/[A-Za-zÀ-ỹ]/.test(v)) return v;}
-  return "";
-}
-function classifyTop(label){
-  const s=txt(label);
+function labelOf(row,firstMonthIndex){for(let i=0;i<firstMonthIndex;i++){const v=String(row[i]||"").trim(); if(/[A-Za-zÀ-ỹ]/.test(v)) return v;}return "";}
+function classifyTop(label){const s=txt(label);
   if(/^1\.\s/.test(label)||s=="cogs") return {group:"COGS",service:"COGS"};
   if(/^2\.\s/.test(label)||/^3\.\s/.test(label)||s.includes("luong")||s.includes("nhan su")) return {group:"People Cost",service:"HR / Payroll"};
   if(/^7\.\s/.test(label)||/^8\.\s/.test(label)||s.includes("khach hang")||s.includes("marketing")) return {group:"Selling Expense",service:"Sales & Marketing"};
   if(/^4\.\s/.test(label)||/^5\.\s/.test(label)||/^9\.\s/.test(label)||/^10\.\s/.test(label)||/^11\.\s/.test(label)||/^12\.\s/.test(label)||/^13\.\s/.test(label)||s.includes("hanh chinh")||s.includes("thue nha")||s.includes("co so vat chat")||s.includes("phan mem")||s.includes("thue")) return {group:"G&A",service:"Admin / Office"};
   return {group:"Other",service:"Other"};
 }
-function classifyService(label){
-  const s=txt(label);
+function classifyService(label){const s=txt(label);
   if(s.includes("livestream")) return {group:"COGS",service:"Livestream"};
   if(s.includes("video")) return {group:"COGS",service:"Video Production"};
   if(s.includes("shop")) return {group:"COGS",service:"Shop Operation"};
@@ -96,40 +91,26 @@ function classifyService(label){
 }
 function isTopParent(label){return /^\s*\d+\.\s/.test(label)}
 function isServiceParent(label){return /^\s*1\.\d+\.\s/.test(label)}
-
 function parseCost(text){
   const table=csvParse(text.replace(/^\uFEFF/,""));
   const hi=table.findIndex(r=>r.some(c=>MONTH_ORDER.includes(String(c).trim())));
   if(hi<0) throw new Error("Không tìm thấy header tháng Jan-Dec trong CSV.");
-  const header=table[hi];
-  const idx=[]; header.forEach((h,i)=>{if(MONTH_ORDER.includes(String(h).trim()))idx.push({name:String(h).trim(),index:i});});
-  const firstMonth=idx[0].index;
-  monthCols=idx.map(x=>x.name); parentRows=[]; serviceRows=[]; detailRows=[];
+  const header=table[hi]; const idx=[]; header.forEach((h,i)=>{if(MONTH_ORDER.includes(String(h).trim()))idx.push({name:String(h).trim(),index:i});});
+  const firstMonth=idx[0].index; monthCols=idx.map(x=>x.name); parentRows=[]; serviceRows=[]; detailRows=[];
   let currentTop=null,currentService=null;
   for(let i=hi+1;i<table.length;i++){
-    const label=labelOf(table[i],firstMonth);
-    if(!label) continue;
-    const low=txt(label);
-    if(low.includes("total cost")||low.includes("dong tien")||low.includes("net cash")||low.includes("so du")) continue;
+    const label=labelOf(table[i],firstMonth); if(!label) continue;
+    const low=txt(label); if(low.includes("total cost")||low.includes("dong tien")||low.includes("net cash")||low.includes("so du")) continue;
     let months={},total=0; idx.forEach(m=>{const a=num(table[i][m.index]); months[m.name]=a; total+=a;});
     if(total<=0) continue;
-    if(isServiceParent(label)){
-      const c=classifyService(label);
-      currentService={label,display:clean(label),group:c.group,service:c.service,months,total,parent:currentTop?currentTop.display:"COGS"};
-      serviceRows.push(currentService); continue;
-    }
-    if(isTopParent(label)){
-      const c=classifyTop(label);
-      currentTop={label,display:clean(label),group:c.group,service:c.service,months,total};
-      currentService=null;
-      parentRows.push(currentTop); continue;
-    }
+    if(isServiceParent(label)){const c=classifyService(label); currentService={label,display:clean(label),group:c.group,service:c.service,months,total,parent:currentTop?currentTop.display:"COGS"}; serviceRows.push(currentService); continue;}
+    if(isTopParent(label)){const c=classifyTop(label); currentTop={label,display:clean(label),group:c.group,service:c.service,months,total}; currentService=null; parentRows.push(currentTop); continue;}
     detailRows.push({label,display:clean(label),group:currentService?currentService.group:(currentTop?currentTop.group:"Other"),service:currentService?currentService.service:(currentTop?currentTop.service:"Other"),parent:currentService?currentService.display:(currentTop?currentTop.display:"Unmapped"),months,total});
   }
 }
 function monthsSelected(){const a=MONTH_ORDER.indexOf(filterFrom.value),b=MONTH_ORDER.indexOf(filterTo.value);return MONTH_ORDER.slice(Math.max(a,0),b+1).filter(m=>monthCols.includes(m))}
 function totals(rows){const ms=monthsSelected(); return rows.map(r=>({...r,total:ms.reduce((s,m)=>s+(r.months[m]||0),0)})).filter(r=>r.total>0)}
-function rowsParent(){return totals(parentRows).filter(r=>(filterGroup.value=="All"||r.group==filterGroup.value)&&(filterService.value=="All"||r.service==filterService.value)&&(filterDetail.value=="All"||r.display==filterDetail.value))}
+function rowsParent(){return totals(parentRows).filter(r=>(filterGroup.value=="All"||r.group==filterGroup.value)&&(filterService.value=="All"||r.service==filterService.value))}
 function rowsService(){return totals(serviceRows).filter(r=>(filterGroup.value=="All"||r.group==filterGroup.value)&&(filterService.value=="All"||r.service==filterService.value))}
 function rowsDetail(){return totals(detailRows).filter(r=>(filterGroup.value=="All"||r.group==filterGroup.value)&&(filterService.value=="All"||r.service==filterService.value)&&(filterDetail.value=="All"||r.display==filterDetail.value||r.parent==filterDetail.value))}
 function sum(rows){return rows.reduce((a,b)=>a+b.total,0)}
@@ -137,12 +118,8 @@ function group(rows,field){const m=new Map();rows.forEach(r=>m.set(r[field],(m.g
 function barList(id,data,cls=""){const max=Math.max(...data.map(x=>x.amount),1);document.getElementById(id).innerHTML=data.slice(0,12).map(x=>`<div class="bar-row"><div class="bar-top"><span>${x.name}</span><b>${vnd(x.amount)}</b></div><div class="track"><div class="fill ${cls}" style="width:${Math.max(2,x.amount/max*100)}%"></div></div></div>`).join("")||"<div class='small'>No data</div>"}
 function card(t,v,h,c){return`<div class="card"><div class="label">${t}</div><div class="value ${c}">${v}</div><div class="helper">${h}</div></div>`}
 function prog(t,a,tg,unit){const rate=tg?a/tg*100:0;const ok=rate<=100,w=rate<=115,cls=ok?"green":w?"yellow":"red";return`<div class="card"><div class="label">${t}</div><div class="value ${cls}">${unit=="%"?pct(a):vnd(a)}</div><div class="helper">Target: ${unit=="%"?pct(tg):vnd(tg)} • ${pct(rate)}</div><div class="progress"><div class="progress-fill ${cls}" style="width:${Math.min(rate,100)}%"></div></div></div>`}
-function fillSelect(id,vals){const el=document.getElementById(id),cur=el.value||"All";const opts=["All",...Array.from(new Set(vals.filter(Boolean))).sort()];el.innerHTML=opts.map(x=>`<option>${x}</option>`).join("");if(opts.includes(cur))el.value=cur}
-function setup(){
-  fillSelect("filterGroup",[...parentRows,...serviceRows].map(r=>r.group)); fillSelect("filterService",[...parentRows,...serviceRows].map(r=>r.service)); fillSelect("filterDetail",[...parentRows,...serviceRows,...detailRows].map(r=>r.display||r.parent));
-  filterFrom.innerHTML=monthCols.map(m=>`<option>${m}</option>`).join(""); filterTo.innerHTML=monthCols.map(m=>`<option>${m}</option>`).join(""); filterFrom.value=monthCols[0]||"Jan"; filterTo.value=monthCols[monthCols.length-1]||"Dec";
-  ["filterGroup","filterService","filterFrom","filterTo","filterDetail"].forEach(id=>document.getElementById(id).onchange=render);
-}
+function fillSelect(id,vals){const el=document.getElementById(id),cur=el.value||"All";const opts=["All",...Array.from(new Set(vals.filter(Boolean))).sort()];el.innerHTML=opts.map(x=>`<option>${x}</option>`).join(""); el.value=opts.includes(cur)?cur:"All";}
+function setup(){fillSelect("filterGroup",[...parentRows,...serviceRows].map(r=>r.group));fillSelect("filterService",[...parentRows,...serviceRows].map(r=>r.service));fillSelect("filterDetail",[...serviceRows,...detailRows].map(r=>r.display||r.parent));filterFrom.innerHTML=monthCols.map(m=>`<option>${m}</option>`).join("");filterTo.innerHTML=monthCols.map(m=>`<option>${m}</option>`).join("");filterFrom.value=monthCols[0]||"Jan";filterTo.value=monthCols[monthCols.length-1]||"Dec";["filterGroup","filterService","filterFrom","filterTo","filterDetail"].forEach(id=>document.getElementById(id).onchange=render);}
 function render(){
   const p=rowsParent(),s=rowsService(),d=rowsDetail(),ms=monthsSelected();
   const total=sum(p),cogs=sum(p.filter(r=>r.group=="COGS")),people=sum(p.filter(r=>r.group=="People Cost")),selling=sum(p.filter(r=>r.group=="Selling Expense")),ga=sum(p.filter(r=>r.group=="G&A")),other=sum(p.filter(r=>r.group=="Other")),opex=people+selling+ga+other;
@@ -166,7 +143,7 @@ function render(){
   detailTable.innerHTML=d.sort((a,b)=>b.total-a.total).slice(0,40).map(r=>`<tr><td><span class="tag">${r.parent}</span></td><td>${r.display}</td><td class="right"><b>${vnd(r.total)}</b></td></tr>`).join("");
 }
 async function load(){
-  try{status.innerHTML="Đang tải dữ liệu...";const res=await fetch(CSV_URL+"&cache="+Date.now());if(!res.ok)throw new Error("Fetch CSV failed: "+res.status);const text=await res.text();parseCost(text);setup();render();status.innerHTML=`Đã tải thành công. Parent rows: <b>${parentRows.length}</b>, COGS service rows: <b>${serviceRows.length}</b>, detail rows: <b>${detailRows.length}</b>.`;}
+  try{status.innerHTML="Đang tải dữ liệu...";const res=await fetch(CSV_URL+"&cache="+Date.now());if(!res.ok)throw new Error("Fetch CSV failed: "+res.status);const text=await res.text();parseCost(text);setup();render();status.innerHTML=`Đã tải thành công. Parent rows: <b>${parentRows.length}</b>, COGS service rows: <b>${serviceRows.length}</b>, detail rows: <b>${detailRows.length}</b>. Chi tiết drilldown không ảnh hưởng KPI tổng.`;}
   catch(e){status.innerHTML="<span class='red'>"+e.message+"</span>"}
 }
 load();
